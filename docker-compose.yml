@@ -1,0 +1,47 @@
+version: "3.8"
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=3d    
+      - --query.max-concurrency=6
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports: ["9090:9090"]
+    restart: unless-stopped
+
+  snmp_exporter:
+    image: prom/snmp-exporter:v0.26.0
+    container_name: snmp_exporter
+    volumes:
+      - ./snmp/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+    ports: ["9116:9116"]
+    restart: unless-stopped
+
+  blackbox_exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: blackbox_exporter
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command: [ "--config.file=/etc/blackbox_exporter/config.yml" ]
+    ports: ["9115:9115"]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=adminpass
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports: ["3000:3000"]
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

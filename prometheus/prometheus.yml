@@ -1,0 +1,40 @@
+global:
+  scrape_interval: 60s   
+  evaluation_interval: 60s
+
+scrape_configs:
+  - job_name: "snmp_ifmib"
+    metrics_path: /snmp
+    static_configs:
+      - targets:
+          - 192.168.99.2 # Catalyst
+          - 192.168.40.2 # BS-G2008
+    params:
+      module: [ if_mib ]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: snmp_exporter:9116
+
+  # 2) 外形監視（ICMP ping）
+  - job_name: "bb_icmp"
+    metrics_path: /probe
+    params:
+      module: [ icmp ]
+    static_configs:
+      - targets:
+          - 8.8.8.8
+          - 1.1.1.1
+          - 192.168.99.2   
+          - 192.168.40.2
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
